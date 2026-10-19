@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0c1726">
+  <title>Field Lines AR — Marker Prototype</title>
+  <!-- Versions follow the AR.js marker-based A-Frame example. -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; font-family: system-ui, sans-serif; }
+    #ui { position: fixed; z-index: 9999; top: 12px; left: 12px; right: 12px; pointer-events: none;
+          display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .panel { background: rgba(9, 21, 36, .84); color: white; border-radius: 12px;
+             padding: 10px 14px; max-width: 480px; text-align: center; box-shadow: 0 4px 16px #0003; }
+    h1 { margin: 0 0 5px; font-size: 16px; }
+    #status { font-size: 13px; line-height: 1.4; }
+    button { pointer-events: auto; color: #0c1726; background: #d8f5ff; border: 0; border-radius: 8px;
+             padding: 10px 14px; font-size: 14px; font-weight: 650; cursor: pointer; }
+    #credit { position: fixed; left: 8px; right: 8px; bottom: 10px; z-index: 9999;
+              pointer-events: none; color: white; text-shadow: 1px 1px 4px #000; font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <div class="panel">
+      <h1>Magnetic field around a circular loop</h1>
+      <div id="status" role="status" aria-live="polite">Allow camera access, then point at the Hiro marker.</div>
+    </div>
+    <button id="toggle" type="button">Hide field</button>
+  </div>
+  <div id="credit">Calculated field-line model; not a magnetic-field measurement.</div>
+
+  <a-scene embedded vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
+           arjs="sourceType: webcam; debugUIEnabled: false;"
+           renderer="colorManagement: true; precision: medium;">
+    <!-- The center of the Hiro marker is the 3D scene origin. Its plane is XZ. -->
+    <a-marker id="marker" preset="hiro" emitevents="true"
+              smooth="true" smooth-count="5" smooth-tolerance="0.01" smooth-threshold="2">
+      <!-- Calibration: replace position/rotation/scale after measuring marker->coil transform.
+           Sample geometry uses marker-width units: 1 unit = the width of the printed black marker square.
+           The sample coil is centered at X=0,Z=0,Y=0.60, with radius 0.55. -->
+      <a-entity id="field-anchor" position="0 0 0" rotation="0 0 0" scale="1 1 1">
+        <!-- Swap this path for models/YOUR_FIELD_LINES.glb after exporting tube meshes. -->
+        <a-entity id="field-model" gltf-model="url(models/demo_fieldlines.glb)"></a-entity>
+      </a-entity>
+    </a-marker>
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const status = document.getElementById('status');
+    const marker = document.getElementById('marker');
+    const fieldAnchor = document.getElementById('field-anchor');
+    const fieldModel = document.getElementById('field-model');
+    const toggle = document.getElementById('toggle');
+    marker.addEventListener('markerFound', () => {
+      status.textContent = 'Marker detected. Move the phone slowly to explore the calculated field.';
+    });
+    marker.addEventListener('markerLost', () => {
+      status.textContent = 'Marker lost. Bring the Hiro marker back into view.';
+    });
+    fieldModel.addEventListener('model-error', () => {
+      status.textContent = 'Could not load the GLB model. Check its path and browser console.';
+    });
+    toggle.addEventListener('click', () => {
+      const show = !fieldAnchor.getAttribute('visible');
+      fieldAnchor.setAttribute('visible', show);
+      toggle.textContent = show ? 'Hide field' : 'Show field';
+    });
+  </script>
+</body>
+</html>
